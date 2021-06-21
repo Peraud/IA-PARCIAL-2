@@ -32,6 +32,7 @@ public abstract class Enemy : MonoBehaviour
         if (distanceToPlayer <= attackDistance)
         {
             Player.GetComponent<PlayerController>().recibirDaño();
+
         }
         yield return null;
     }

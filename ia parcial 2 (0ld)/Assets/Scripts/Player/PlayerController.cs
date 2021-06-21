@@ -15,9 +15,20 @@ public class PlayerController : MonoBehaviour, IPotionGrabber
 
     [SerializeField] private ControlMode controlMode;
 
+    //State Machine
+    private FSM<string> _playerFsm;
+
+    //Decision Tree
+    ActionNode<string> _actionIdle;
+    ActionNode<string> _actionMove;
+    QuestionNode _questionMove;
+
+    float v = 0;
+    float h = 0;
+
     //public SaveLoad save_load;
 
-    
+
 
     private float m_currentV = 0;
     private float m_currentH = 0;
@@ -55,9 +66,6 @@ public class PlayerController : MonoBehaviour, IPotionGrabber
     {
         return controlMode;
     }
-
-
-
     private void Awake()
     {
         if (!m_animator) { m_animator = gameObject.GetComponent<Animator>(); }
@@ -65,12 +73,22 @@ public class PlayerController : MonoBehaviour, IPotionGrabber
 
         joystick = gameObject.GetComponent<JoystickController>();
         esMobile = (controlMode == ControlMode.ANDROID);
-
     }
-    private void Start()
+     void Start()
     {
         checkpoint = this.GetComponent<CheckPoint>();
         this.guardarCheckPoint();
+
+        var idle = new PlayerIdleState<string>(this, m_animator);
+        var move = new PlayerMoveState<string>(this);
+
+        _playerFsm = new FSM<string>(idle);
+
+        _actionIdle = new ActionNode<string>(_playerFsm, "Idle");
+        _actionMove = new ActionNode<string>(_playerFsm, "Move");
+      
+       //_questionMove = new QuestionNode(walk, _actionMove, _actionIdle);
+
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -181,10 +199,9 @@ public class PlayerController : MonoBehaviour, IPotionGrabber
         m_jumpInput = false;
     }
 
-    private void correrUpdate()
+    public void correrUpdate()
     {
-        float v = 0;
-        float h = 0;
+        
         if (!esMobile) {
             v = Input.GetAxis("Vertical");
             h = Input.GetAxis("Horizontal");
@@ -258,5 +275,13 @@ public class PlayerController : MonoBehaviour, IPotionGrabber
     public void GetPwr(int pwr)
     {
         return;
+    }
+
+    bool Moving()
+    {
+        if (h != 0 || v != 0)
+            return true;
+
+        return false;
     }
 }
