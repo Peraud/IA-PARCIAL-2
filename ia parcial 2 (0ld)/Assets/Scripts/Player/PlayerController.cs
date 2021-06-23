@@ -16,7 +16,7 @@ public class PlayerController : MonoBehaviour, IPotionGrabber
     [SerializeField] private ControlMode controlMode;
 
     //State Machine
-    private FSM<string> _playerFsm;
+    public FSM<string> _playerFsm;
 
     //Decision Tree
     ActionNode<string> _actionIdle;
@@ -53,6 +53,7 @@ public class PlayerController : MonoBehaviour, IPotionGrabber
     public int vidas = 5;
     public GameObject defender;
     public bool isDefender;
+    
 
     public bool esMobile = false;
     public JoystickController joystick;
@@ -75,19 +76,24 @@ public class PlayerController : MonoBehaviour, IPotionGrabber
         esMobile = (controlMode == ControlMode.ANDROID);
     }
      void Start()
-    {
+     {
         checkpoint = this.GetComponent<CheckPoint>();
         this.guardarCheckPoint();
 
-        var idle = new PlayerIdleState<string>(this, m_animator);
-        var move = new PlayerMoveState<string>(this);
+       
+        var playerIdleState = new PlayerIdleState<string>(this, m_animator);
+        var playerMoveState = new PlayerMoveState<string>(this);
+        var playerMoveSlowState = new PlayerMoveSlowState<string>(this);
 
-        _playerFsm = new FSM<string>(idle);
+        playerIdleState.AddTransition("Move", playerMoveState);
+        playerMoveState.AddTransition("Iddle", playerIdleState);
+        playerMoveSlowState.AddTransition("MoveSlow", playerMoveState);
+        _playerFsm = new FSM<string>(playerIdleState);
+        
+        // _actionIdle = new ActionNode<string>(_playerFsm, "Idle");
+        //  _actionMove = new ActionNode<string>(_playerFsm, "Move");
 
-        _actionIdle = new ActionNode<string>(_playerFsm, "Idle");
-        _actionMove = new ActionNode<string>(_playerFsm, "Move");
-      
-       //_questionMove = new QuestionNode(walk, _actionMove, _actionIdle);
+        //_questionMove = new QuestionNode(walk, _actionMove, _actionIdle);
 
     }
 
@@ -165,14 +171,17 @@ public class PlayerController : MonoBehaviour, IPotionGrabber
 
     private void Update()
     {
+        _playerFsm.OnUpdate();
+
         if (!m_jumpInput && Input.GetKey(KeyCode.Space))
         {
             m_jumpInput = true;
         }
         if ( esMobile && joystick.jumpPressed)
-       {
+        {
             m_jumpInput = true;
         }
+     
 
     }
 
@@ -215,8 +224,17 @@ public class PlayerController : MonoBehaviour, IPotionGrabber
 
         if (v < 0)
         {
-            if (walk) { v *= m_backwardsWalkScale; }
-            else { v *= m_backwardRunScale; }
+            if (walk) 
+            {
+                v *= m_backwardsWalkScale;
+                _playerFsm.Transition("MoveSlow");
+            }
+            else 
+            {
+                
+                v *= m_backwardRunScale;
+                _playerFsm.Transition("Move");
+            }
         }
         else if (walk)
         {
@@ -236,6 +254,7 @@ public class PlayerController : MonoBehaviour, IPotionGrabber
         JumpingAndLanding();
     }
 
+   
     private void JumpingAndLanding()
     {
         bool jumpCooldownOver = (Time.time - m_jumpTimeStamp) >= m_minJumpInterval;

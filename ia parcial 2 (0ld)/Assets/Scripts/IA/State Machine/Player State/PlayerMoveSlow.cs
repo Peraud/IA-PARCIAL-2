@@ -2,25 +2,23 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerIdleState<T> : States<T>
+public class PlayerMoveSlowState <T> : States<T>
 {
 	PlayerController _player;
-	Animator _anim;
-	
-	public PlayerIdleState(PlayerController p, Animator animator)
+
+	public PlayerMoveSlowState(PlayerController p)
 	{
 		_player = p;
-		_anim = animator;
-		
 	}
 
 	public override void Execute()
 	{
-		
+		_player.correrUpdate();
 	}
 
 	public override void Sleep()
 	{
-		Debug.Log("Sleep de Iddle");
+		Debug.Log("Sleep de MoveSlow");
 	}
+
 }

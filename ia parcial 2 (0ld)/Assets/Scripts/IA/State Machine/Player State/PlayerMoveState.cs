@@ -16,4 +16,9 @@ public class PlayerMoveState<T> : States<T>
 	{
 		_player.correrUpdate();
 	}
+
+	public override void Sleep()
+	{
+		Debug.Log("Sleep de Move");
+	}
 }
